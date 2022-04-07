@@ -12,12 +12,15 @@
   "dependencies": {
     "@vueuse/core": "^8.2.4",
     "discord.js-selfbot-v13": "^1.2.8",
+    "express": "^4.17.3",
+    "lyla": "^0.4.6",
     "vue": "^3.2.31",
     "vue-router": "^4.0.14"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^0.19.4",
     "@iconify-json/carbon": "^1.1.2",
+    "@types/express": "^4.17.13",
     "@types/node": "^17.0.23",
     "@unocss/reset": "^0.30.11",
     "@vitejs/plugin-vue": "^2.3.1",
