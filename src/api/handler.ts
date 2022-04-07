@@ -1,10 +1,10 @@
-import type { Channel, Message } from 'discord.js-selfbot-v13'
+import type { Message } from 'discord.js-selfbot-v13'
 import { Client, Collection } from 'discord.js-selfbot-v13'
 import express from 'express'
 
 const app = express()
 app.use(express.json())
-const client = new Client()
+let client: Client | null = null
 const PREFIX = 'ms-'
 const commands = new Collection<string, Function>()
 const linksCache = new Collection<string, string[]>()
@@ -17,10 +17,12 @@ function ping(message: Message) {
 commands.set('ping', ping)
 
 app.get('/user', (req, res) => {
-  res.json(client.user)
+  res.json(client?.user)
 })
 
 app.post('/start', (req, res) => {
+  client = new Client()
+
   console.log('[LOG] ~ file: handler.ts ~ line 24 ~ req.body', req.body)
   const { channels, mainChannel, token, cacheTime } = req.body
   client.on('ready', async() => {
@@ -129,7 +131,8 @@ app.post('/start', (req, res) => {
 })
 
 app.post('/stop', (req, res) => {
-  client.destroy()
+  client?.destroy()
+  client = null
   res.json({ message: 'stopped' })
 })
 
