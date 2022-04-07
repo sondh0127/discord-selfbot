@@ -1,4 +1,4 @@
-import type { Message } from 'discord.js-selfbot-v13'
+import type { Channel, Message } from 'discord.js-selfbot-v13'
 import { Client, Collection } from 'discord.js-selfbot-v13'
 import express from 'express'
 
@@ -7,6 +7,7 @@ app.use(express.json())
 const client = new Client()
 const PREFIX = 'ms-'
 const commands = new Collection<string, Function>()
+const linksCache = new Collection<string, string[]>()
 
 function ping(message: Message) {
   // send a message to the channel the message was sent in
@@ -21,10 +22,14 @@ app.get('/user', (req, res) => {
 
 app.post('/start', (req, res) => {
   console.log('[LOG] ~ file: handler.ts ~ line 24 ~ req.body', req.body)
-  const { channels, mainChannel, token } = req.body
+  const { channels, mainChannel, token, cacheTime } = req.body
   client.on('ready', async() => {
     // log the user tag that is logged in to the console
     console.log(`${client.user.username} is ready!`)
+    // clear links cache each 1 hour
+    setInterval(() => {
+      linksCache.clear()
+    }, cacheTime)
     res.json(client.user)
   })
 
@@ -35,19 +40,38 @@ app.post('/start', (req, res) => {
     if (message.content) {
       // regex to check a string is contains a link
       const regex = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/gi
-      const isLink = regex.test(message.content)
-      console.log('[LOG] ~ file: handler.ts ~ line 39 ~ isLink', isLink)
+      const link = regex.exec(message.content)?.[1]
+      console.log('[LOG] ~ file: handler.ts ~ line 40 ~ link', link)
 
       // if the message not come from mainChannel
       const isNotMainChannel = message.channel.id !== mainChannel
       // message is coming from source channel
       const fromSourceChannels = channels.includes(message.channel.id)
 
-      if (isNotMainChannel && fromSourceChannels && isLink) {
+      if (isNotMainChannel && fromSourceChannels && !!link) {
+        // check if the link is already in the cache
+        const isLinkInCache = linksCache.has(link)
+        const channelDetail = `${message.guild?.name} - ${message.channel.name}`
+        // if the link is not in the cache
+        if (!isLinkInCache) {
+          // add the link to the cache
+          linksCache.set(link, [channelDetail])
+        }
+        else {
+          // if the link is in the cache
+          // add the link to the cache
+          const cachedChannels = linksCache.get(link)
+          if (!cachedChannels?.includes(channelDetail))
+            linksCache.set(link, [...(linksCache.get(link) || []), channelDetail])
+        }
+
+        // send the message to the main channel
         const channel = client.channels.cache.get(mainChannel)
+        const channelStr = linksCache.get(link)?.join(' and ')
+        const messageStr = `${message.content} from ${channelStr}`
 
         setTimeout(
-          () => channel.send(message.content),
+          () => channel.send(messageStr),
           1000 + Math.floor(Math.random() * 1000),
         )
       }

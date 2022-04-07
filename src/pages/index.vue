@@ -2,14 +2,16 @@
 import { lyla } from 'lyla'
 const channelRegex = /https:\/\/discord.com\/channels\/*.*\/(.*)/
 
-const token = $ref('MzUwNTc3NjgyMDM3MDgwMDY1.YkxXvA._vSKbZ7JDOU53IiHXX7hOgxgi0c')
-const mainChannel = $ref('https://discord.com/channels/960915142042845284/960915142588137614') // Test1
-const channels = $ref(
-  [
+const token = $(useStorage('token', 'MzUwNTc3NjgyMDM3MDgwMDY1.YkxXvA._vSKbZ7JDOU53IiHXX7hOgxgi0c'))
+const mainChannel = $(useStorage('mainChannel', 'https://discord.com/channels/960915142042845284/960915142588137614')) // Test1
+const channels = $(
+  useStorage('channels', [
     'https://discord.com/channels/960927218291310645/960927218769473618', // Test2
     'https://discord.com/channels/961627753378091079/961627753982083124', // Test3
-  ],
+  ]),
 )
+// 1 hours
+const cacheTimes = $(useStorage('cacheTimes', [0, 0, 0, 10]))
 
 let isLoading = $ref(false)
 let user = $ref<any>(null)
@@ -29,11 +31,14 @@ async function login() {
   isLoading = true
   const _channels = channels.map(channel => channelRegex.exec(channel)?.[1])
   const _mainChannel = channelRegex.exec(mainChannel)?.[1]
+  const _cacheTimes = cacheTimes.map(time => time || 0)
+  const cacheTime = _cacheTimes[0] * 24 * 60 * 60 * 1000 + _cacheTimes[1] * 60 * 60 * 1000 + _cacheTimes[2] * 60 * 1000 + _cacheTimes[3] * 1000
   const { json } = await lyla.post('/start', {
     json: {
       token,
       channels: _channels,
       mainChannel: _mainChannel,
+      cacheTime,
     },
   })
   user = json
@@ -71,9 +76,50 @@ const canSubmit = $computed(() => channels.some(item => item))
           <em text-sm op75>Destination Channels</em>
           <InputField v-model:value="mainChannel" placeholder="Channel Link" />
         </div>
+        <div py-4 flex="~ col" items="center" justify="center" gap="10px">
+          <em text-sm op75>Cache Time (of link from a channel)</em>
+          <div class="flex items-center gap-1">
+            <div class="flex flex-col items-center gap-2">
+              <InputNumberField
+                v-model:value="cacheTimes[0]"
+                :min="0"
+                :max="365"
+                placeholder="days"
+              />
+              <em text-sm op75>days</em>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <InputNumberField
+                v-model:value="cacheTimes[1]"
+                :min="0"
+                :max="24"
+                placeholder="hours"
+              />
+              <em text-sm op75>hours</em>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <InputNumberField
+                v-model:value="cacheTimes[2]"
+                :min="0"
+                :max="59"
+                placeholder="minutes"
+              />
+              <em text-sm op75>minutes</em>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <InputNumberField
+                v-model:value="cacheTimes[3]"
+                :min="0"
+                :max="59"
+                placeholder="seconds"
+              />
+              <em text-sm op75>seconds</em>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div py-4 flex="~ col" items="center" justify="center" gap="10px">
+      <div py-4 flex="~ col" items="center" gap="10px">
         <em text-sm op75>Source Channels</em>
         <InputField v-model:value="channels[0]" placeholder="Channel 1 Link" />
         <InputField v-model:value="channels[1]" placeholder="Channel 2 Link" />
