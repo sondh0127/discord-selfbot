@@ -1,49 +1,34 @@
 <script setup lang="ts">
-const name = $ref('')
+const servers = $ref([])
 
-const router = useRouter()
-const go = () => {
-  if (name)
-    router.push(`/hi/${encodeURIComponent(name)}`)
+function login() {
+  console.log('[LOG] ~ file: index.vue ~ line 3 ~ servers', servers)
 }
+
+const canSubmit = $computed(() => servers.some(item => item))
+
 </script>
 
 <template>
   <div>
-    <div i-carbon-campsite text-4xl inline-block />
+    <div i-carbon:center-circle text-4xl inline-block />
     <p>
-      <a rel="noreferrer" href="https://github.com/antfu/vitesse-lite" target="_blank">
-        Vitesse Lite
-      </a>
+      <a rel="noreferrer" href="https://web-minterscan.vercel.app" target="_blank">MinterScan</a>
     </p>
     <p>
-      <em text-sm op75>Opinionated Vite Starter Template</em>
+      <em text-sm op75>MinterScan SelfBot</em>
     </p>
+    {{ name }}
 
-    <div py-4 />
-
-    <input
-      id="input"
-      v-model="name"
-      placeholder="What's your name?"
-      type="text"
-      autocomplete="false"
-      p="x-4 y-2"
-      w="250px"
-      text="center"
-      bg="transparent"
-      border="~ rounded gray-200 dark:gray-700"
-      outline="none active:none"
-      @keydown.enter="go"
-    >
+    <div py-4 flex="~ col" items="center" justify="center" gap="10px">
+      <InputField v-model:value="servers[0]" placeholder="Server 1 ID" />
+      <InputField v-model:value="servers[1]" placeholder="Server 2 ID" />
+      <InputField v-model:value="servers[2]" placeholder="Server 3 ID" />
+    </div>
 
     <div>
-      <button
-        class="m-3 text-sm btn"
-        :disabled="!name"
-        @click="go"
-      >
-        Go
+      <button class="m-3 text-sm btn" :disabled="!canSubmit" @click="login">
+        Login
       </button>
     </div>
   </div>
