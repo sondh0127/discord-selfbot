@@ -17,7 +17,7 @@ function ping(message: Message) {
 commands.set('ping', ping)
 
 app.get('/user', (req, res) => {
-  res.json(client?.user)
+  res.json(client?.user || null)
 })
 
 app.post('/start', (req, res) => {
